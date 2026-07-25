@@ -1,13 +1,10 @@
 name: CI
 
+# Fork policy: do not run the full multi-platform CI matrix on every push/PR.
+# Automatic builds use `.github/workflows/release-macos-arm64-signed.yml` instead.
+# Keep this workflow available for manual runs when a full check is needed.
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-  push:
-    branches: [master, windows]
-    paths-ignore:
-      - "website/**"
-      - ".github/APPROVED_CONTRIBUTORS"
+  workflow_dispatch:
 
 permissions:
   contents: read

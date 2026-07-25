@@ -20,18 +20,26 @@
 # Output:
 #   herdr-aarch64-apple-darwin.dmg
 #
-# Run:
-#   Actions → Release macOS arm64 signed DMG → Run workflow
-#   Default: upload Actions artifacts only (no GitHub Release / tag).
-#   Leave release_version empty to use Cargo.toml package version.
-#   Enable "Publish GitHub Release" to create a prerelease tag:
-#     macos-arm64-v{version}-{7-char commit sha}
-#   Short SHA ties the tag to the built commit: same version + same commit →
-#   same tag. Re-runs replace assets on that release (overwrite_files: true).
+# Triggers:
+#   - push to master (replaces automatic ci.yml on this fork)
+#   - manual: Actions → Release macOS arm64 signed DMG → Run workflow
+#
+# Default on push / manual: upload Actions artifacts only (no GitHub Release).
+# Manual runs can enable "Publish GitHub Release" for a prerelease tag:
+#   macos-arm64-v{version}-{7-char commit sha}
+# Short SHA ties the tag to the built commit: same version + same commit →
+# same tag. Re-runs replace assets on that release (overwrite_files: true).
 
 name: Release macOS arm64 signed DMG
 
 on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - "website/**"
+      - ".github/APPROVED_CONTRIBUTORS"
+      - "docs/**"
+      - "**.md"
   workflow_dispatch:
     inputs:
       publish_github_release:
@@ -59,9 +67,9 @@ on:
 permissions:
   contents: read
 
-# Do not cancel in-progress release builds when re-triggered.
+# One signed build per ref; do not cancel in-flight notarization.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.release_version || inputs.tag || 'cargo-version' }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -88,8 +96,9 @@ jobs:
         id: resolve
         shell: bash
         env:
-          INPUT_RELEASE_VERSION: ${{ inputs.release_version }}
-          INPUT_TAG: ${{ inputs.tag }}
+          # github.event.inputs is empty on push; inputs.* is dispatch-only.
+          INPUT_RELEASE_VERSION: ${{ github.event.inputs.release_version || '' }}
+          INPUT_TAG: ${{ github.event.inputs.tag || '' }}
           TAG_PREFIX: macos-arm64-v
         run: |
           set -euo pipefail
@@ -533,7 +542,8 @@ jobs:
           rm -f "${RUNNER_TEMP}/developer-id-application.p12"
 
   publish:
-    if: ${{ inputs.publish_github_release }}
+    # Push builds always stop at signed artifacts; only manual dispatch can publish.
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publish_github_release == 'true' }}
     needs:
       - resolve-version
       - sign-and-package
