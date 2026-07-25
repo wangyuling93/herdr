@@ -63,3 +63,15 @@ windows-sys = { version = "0.61.2", features = [
     "Win32_UI_Shell",
     "Win32_UI_WindowsAndMessaging",
 ] }
+
+# Known workaround: fully unoptimized debug has hung for minutes inside
+# std HashMap/hashbrown on some aarch64-darwin hosts during server startup
+# (keybind registry, agent-detection TOML parse, Tokio multi-thread spawn).
+# Cargo cannot opt-level std alone; dependency-only opt does not cover
+# HashMaps owned by herdr itself, so the whole dev profile is raised.
+#
+# Scope: all platforms' [profile.dev]. Release is unchanged.
+# Removal: drop when debug `herdr server` binds the client socket within ~1s
+# on aarch64-darwin with opt-level = 0, or a root-cause fix lands.
+[profile.dev]
+opt-level = 1
