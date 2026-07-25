@@ -12,6 +12,11 @@
 #            APPLE_APP_SPECIFIC_PASSWORD
 #   variables: APPLE_ID, APPLE_TEAM_ID
 #
+# Local setup (once per repo / when certs rotate), on macOS with `gh` auth:
+#   .github/scripts/setup-macos-signing-secrets.sh --p12 /path/to/DeveloperID.p12
+# That creates the `codesigning` environment and uploads the secrets/variables
+# above. Pass --repo OWNER/REPO if the checkout remote is not the target fork.
+#
 # Output:
 #   herdr-aarch64-apple-darwin.dmg
 #
