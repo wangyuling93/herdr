@@ -1,8 +1,8 @@
 name: Approve Contributor
 
+# Fork policy: only release-macos-arm64-signed runs automatically.
 on:
-  issue_comment:
-    types: [created, edited]
+  workflow_dispatch:
 
 jobs:
   approve:

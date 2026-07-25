@@ -1,8 +1,8 @@
 name: Close pending-release issues
 
+# Fork policy: only release-macos-arm64-signed runs automatically.
 on:
-  push:
-    branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read

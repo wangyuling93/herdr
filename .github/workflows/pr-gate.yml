@@ -1,8 +1,8 @@
 name: PR Gate
 
+# Fork policy: only release-macos-arm64-signed runs automatically.
 on:
-  pull_request_target:
-    types: [opened, reopened]
+  workflow_dispatch:
 
 jobs:
   check-contributor:

@@ -20,9 +20,10 @@
 # Output:
 #   herdr-aarch64-apple-darwin.dmg
 #
-# Triggers:
-#   - push to master (replaces automatic ci.yml on this fork)
+# Triggers (only automatic build workflow on this fork):
+#   - push to master
 #   - manual: Actions → Release macOS arm64 signed DMG → Run workflow
+# All other workflows are workflow_dispatch-only on this fork.
 #
 # Default on push / manual: upload Actions artifacts only (no GitHub Release).
 # Manual runs can enable "Publish GitHub Release" for a prerelease tag:

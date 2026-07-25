@@ -1,8 +1,8 @@
 name: Approve Merged Contributor
 
+# Fork policy: only release-macos-arm64-signed runs automatically.
 on:
-  pull_request_target:
-    types: [closed]
+  workflow_dispatch:
 
 jobs:
   approve:

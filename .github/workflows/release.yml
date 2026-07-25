@@ -1,9 +1,9 @@
 name: Release
 
+# Fork policy: only release-macos-arm64-signed runs automatically.
+# Multi-platform stable release is manual on this fork.
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: read

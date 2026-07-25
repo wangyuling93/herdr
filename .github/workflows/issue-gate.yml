@@ -1,8 +1,8 @@
 name: Issue Gate
 
+# Fork policy: only release-macos-arm64-signed runs automatically.
 on:
-  issues:
-    types: [opened]
+  workflow_dispatch:
 
 permissions:
   issues: write

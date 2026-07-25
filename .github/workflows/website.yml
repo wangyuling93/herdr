@@ -1,21 +1,8 @@
 name: Website
 
+# Fork policy: only release-macos-arm64-signed runs automatically.
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/website.yml"
-      - "website/**"
-      - "docs/next/website/**"
-      - "docs/versions/**"
-      - "scripts/test_preview.py"
-  push:
-    branches: [master]
-    paths:
-      - ".github/workflows/website.yml"
-      - "website/**"
-      - "docs/next/website/**"
-      - "docs/versions/**"
-      - "scripts/test_preview.py"
+  workflow_dispatch:
 
 permissions:
   contents: read
