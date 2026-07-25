@@ -87,8 +87,35 @@ if ! gh auth status >/dev/null 2>&1; then
   exit 1
 fi
 
+# Prefer git origin over `gh repo view`. In a checkout with origin=fork and
+# upstream=canonical, `gh repo view` often resolves to the upstream and then
+# environment/secret writes fail with HTTP 403 (no admin on upstream).
+resolve_repository_from_git_origin() {
+  local origin_url owner_repo
+  origin_url="$(git remote get-url origin 2>/dev/null)" || return 1
+  owner_repo="$(
+    printf '%s\n' "$origin_url" | sed -E \
+      -e 's#^git@github\.com:##' \
+      -e 's#^ssh://git@github\.com/##' \
+      -e 's#^https://github\.com/##' \
+      -e 's#^http://github\.com/##' \
+      -e 's#\.git$##' \
+      -e 's#/$##'
+  )"
+  if [[ "$owner_repo" =~ ^[^/]+/[^/]+$ ]]; then
+    printf '%s\n' "$owner_repo"
+    return 0
+  fi
+  return 1
+}
+
 if [[ -z "$repository" ]]; then
-  if ! repository="$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)"; then
+  if repository="$(resolve_repository_from_git_origin)"; then
+    echo "Using repository from git origin: $repository"
+  elif repository="$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)"; then
+    echo "Using repository from gh repo view: $repository"
+    echo "Tip: pass --repo OWNER/REPO if this is not the fork you admin." >&2
+  else
     echo "Could not detect the GitHub repository. Pass --repo OWNER/REPO." >&2
     exit 1
   fi
@@ -97,6 +124,14 @@ fi
 if [[ ! "$repository" =~ ^[^/]+/[^/]+$ ]]; then
   echo "--repo must use the OWNER/REPO format, got: $repository" >&2
   exit 2
+fi
+
+permission="$(
+  gh repo view "$repository" --json viewerPermission --jq .viewerPermission 2>/dev/null || true
+)"
+if [[ -n "$permission" && "$permission" != "ADMIN" ]]; then
+  echo "Warning: viewerPermission on ${repository} is ${permission} (need ADMIN to set environment secrets)." >&2
+  echo "If this is wrong, re-run with --repo OWNER/REPO (e.g. wangyuling93/herdr)." >&2
 fi
 
 if [[ -z "$environment_name" ]]; then
