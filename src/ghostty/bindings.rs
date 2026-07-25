@@ -2473,7 +2473,7 @@ pub const GhosttyTerminalOption_GHOSTTY_TERMINAL_OPT_KITTY_IMAGE_STORAGE_LIMIT:
 #[doc = " Enable or disable Kitty image loading via the file medium.\n\n A NULL value pointer is a no-op. Has no effect when Kitty graphics\n are disabled at build time.\n\n Input type: bool*"]
 pub const GhosttyTerminalOption_GHOSTTY_TERMINAL_OPT_KITTY_IMAGE_MEDIUM_FILE:
     GhosttyTerminalOption = 16;
-#[doc = " Enable or disable Kitty image loading via the temporary file medium.\n\n A NULL value pointer is a no-op. Has no effect when Kitty graphics\n are disabled at build time.\n\n Input type: bool*"]
+#[doc = " Enable Kitty image loading via the temporary file medium, restricted to\n the provided directory. The string data is copied into the terminal.\n\n A NULL value pointer disables the temporary file medium. Has no effect\n when Kitty graphics are disabled at build time.\n\n Input type: GhosttyString*"]
 pub const GhosttyTerminalOption_GHOSTTY_TERMINAL_OPT_KITTY_IMAGE_MEDIUM_TEMP_FILE:
     GhosttyTerminalOption = 17;
 #[doc = " Enable or disable Kitty image loading via the shared memory medium.\n\n A NULL value pointer is a no-op. Has no effect when Kitty graphics\n are disabled at build time.\n\n Input type: bool*"]
@@ -2562,7 +2562,7 @@ pub const GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_KITTY_IMAGE_STORAGE_LIMIT: G
 #[doc = " Whether the file medium is enabled for Kitty image loading on the\n active screen.\n\n Returns GHOSTTY_NO_VALUE when Kitty graphics are disabled at build time.\n\n Output type: bool *"]
 pub const GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_KITTY_IMAGE_MEDIUM_FILE: GhosttyTerminalData =
     27;
-#[doc = " Whether the temporary file medium is enabled for Kitty image loading\n on the active screen.\n\n Returns GHOSTTY_NO_VALUE when Kitty graphics are disabled at build time.\n\n Output type: bool *"]
+#[doc = " The directory allowed for Kitty image loading via the temporary file\n medium on the active screen. The string is empty when the medium is\n disabled.\n\n Returns GHOSTTY_NO_VALUE when Kitty graphics are disabled at build time.\n\n Output type: GhosttyString *"]
 pub const GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_KITTY_IMAGE_MEDIUM_TEMP_FILE:
     GhosttyTerminalData = 28;
 #[doc = " Whether the shared memory medium is enabled for Kitty image loading\n on the active screen.\n\n Returns GHOSTTY_NO_VALUE when Kitty graphics are disabled at build time.\n\n Output type: bool *"]
@@ -2574,7 +2574,9 @@ pub const GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_KITTY_GRAPHICS: GhosttyTermi
 pub const GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_SELECTION: GhosttyTerminalData = 31;
 #[doc = " Whether the viewport is currently pinned to the active area.\n\n This is true when the viewport is following the active terminal area,\n and false when the user has scrolled into history.\n\n Output type: bool *"]
 pub const GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_VIEWPORT_ACTIVE: GhosttyTerminalData = 32;
-#[doc = " Whether the viewport is currently pinned to the active area.\n\n This is true when the viewport is following the active terminal area,\n and false when the user has scrolled into history.\n\n Output type: bool *"]
+#[doc = " Whether VT processing encountered a non-gracefully handled error that may\n have prevented a terminal-owned semantic update.\n\n Processing remains best-effort, and ghostty_terminal_reset() does not\n clear it. Gracefully handled protocol failures, configured limits,\n malformed or unsupported input, and failures limited to external effects\n or query responses do not set it.\n\n This can't currently be unset. This is purely informational to consumers\n if there was some error that happened at some point during VT processing.\n\n Output type: bool *"]
+pub const GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_VT_PROCESSING_ERROR: GhosttyTerminalData = 33;
+#[doc = " Maximum valid GhosttyTerminalData value (exclusive sentinel for ranges)."]
 pub const GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_MAX_VALUE: GhosttyTerminalData = 2147483647;
 #[doc = " Terminal data types.\n\n These values specify what type of data to extract from a terminal\n using `ghostty_terminal_get`.\n\n @ingroup terminal"]
 pub type GhosttyTerminalData = ::std::os::raw::c_uint;

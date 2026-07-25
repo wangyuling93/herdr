@@ -572,6 +572,13 @@ unsafe fn capture_clipboard_write(
     ffi::GhosttyClipboardWriteResult_GHOSTTY_CLIPBOARD_WRITE_RESULT_SUCCESS
 }
 
+fn ghostty_string(bytes: &[u8]) -> ffi::GhosttyString {
+    ffi::GhosttyString {
+        ptr: bytes.as_ptr(),
+        len: bytes.len(),
+    }
+}
+
 unsafe fn borrowed_bytes<'a>(value: ffi::GhosttyString) -> Option<&'a [u8]> {
     if value.len == 0 {
         Some(&[])
@@ -857,6 +864,14 @@ impl Terminal {
         install_png_decoder_once();
         let storage_limit = KITTY_IMAGE_STORAGE_LIMIT_BYTES;
         let enable_medium = true;
+        // TEMP_FILE medium is a directory allow-list (GhosttyString*), not a
+        // bool. NULL disables it. Map the old "enabled" behavior to TMPDIR.
+        // Ghostty copies the path immediately; C API expects UTF-8.
+        let temp_dir = std::env::temp_dir();
+        let temp_dir_utf8 = temp_dir
+            .to_str()
+            .ok_or(Error(ffi::GhosttyResult_GHOSTTY_INVALID_VALUE))?;
+        let temp_dir_path = ghostty_string(temp_dir_utf8.as_bytes());
         unsafe {
             ffi::ghostty_terminal_set(
                 self.raw,
@@ -873,7 +888,7 @@ impl Terminal {
             ffi::ghostty_terminal_set(
                 self.raw,
                 ffi::GhosttyTerminalOption_GHOSTTY_TERMINAL_OPT_KITTY_IMAGE_MEDIUM_TEMP_FILE,
-                (&enable_medium as *const bool).cast(),
+                (&temp_dir_path as *const ffi::GhosttyString).cast(),
             )
             .into_result()?;
             ffi::ghostty_terminal_set(
@@ -1355,6 +1370,19 @@ impl Terminal {
                 .into_result()?;
         }
         Ok(out)
+    }
+
+    fn get_string(&self, data: ffi::GhosttyTerminalData) -> Result<String, Error> {
+        let mut out = ffi::GhosttyString::default();
+        unsafe {
+            ffi::ghostty_terminal_get(self.raw, data, (&mut out as *mut ffi::GhosttyString).cast())
+                .into_result()?;
+        }
+        // SAFETY: ghostty_terminal_get returns a borrowed string valid until
+        // the next mutating terminal call; we copy immediately.
+        let bytes = unsafe { borrowed_bytes(out) }
+            .ok_or(Error(ffi::GhosttyResult_GHOSTTY_INVALID_VALUE))?;
+        Ok(String::from_utf8_lossy(bytes).into_owned())
     }
 
     fn get_optional_rgb_color(
@@ -3337,9 +3365,19 @@ mod tests {
         assert!(terminal
             .get_bool(ffi::GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_KITTY_IMAGE_MEDIUM_FILE)
             .unwrap());
-        assert!(terminal
-            .get_bool(ffi::GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_KITTY_IMAGE_MEDIUM_TEMP_FILE)
-            .unwrap());
+        // TEMP_FILE medium is a directory allow-list (GhosttyString), not a bool.
+        let temp_dir = std::env::temp_dir();
+        let expected = temp_dir
+            .to_str()
+            .expect("temp_dir should be UTF-8 in tests");
+        assert_eq!(
+            terminal
+                .get_string(
+                    ffi::GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_KITTY_IMAGE_MEDIUM_TEMP_FILE
+                )
+                .unwrap(),
+            expected
+        );
         assert!(terminal
             .get_bool(ffi::GhosttyTerminalData_GHOSTTY_TERMINAL_DATA_KITTY_IMAGE_MEDIUM_SHARED_MEM)
             .unwrap());
@@ -3806,14 +3844,8 @@ mod tests {
 
     fn test_clipboard_content(mime: &[u8], data: &[u8]) -> ffi::GhosttyClipboardContent {
         ffi::GhosttyClipboardContent {
-            mime: ffi::GhosttyString {
-                ptr: mime.as_ptr(),
-                len: mime.len(),
-            },
-            data: ffi::GhosttyString {
-                ptr: data.as_ptr(),
-                len: data.len(),
-            },
+            mime: ghostty_string(mime),
+            data: ghostty_string(data),
         }
     }
 
