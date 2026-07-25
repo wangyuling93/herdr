@@ -47,6 +47,7 @@ andrejdaskalov
 anhthang
 anmitalidev
 anthonyzhoon
+aprilnea
 arvin7liu
 athaapa
 atomk
@@ -64,9 +65,11 @@ bitigchi
 bkircher
 bleikurr
 bo2themax
+bousii
 brentschroeter
 brianc442
 c0x0o
+carldaws
 cespare
 charliie-dev
 chernetskyi
@@ -241,6 +244,7 @@ puzza007
 qappell
 quinnypig
 qwerasd205
+ragnoroct
 raphamorim
 reo101
 rewdy

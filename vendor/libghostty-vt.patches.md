@@ -16,7 +16,7 @@ upstream discussion: not opened; libghostty-vt currently exposes current mode mu
 
 upstream pr: not opened
 
-vendored base: `c5a21edfcbc2d5b46540ad91b7980aca31f5f1f3`
+vendored base: `ab0b9da9e88fcb4b0533a1854e84628f663930af`
 
 local files:
 
