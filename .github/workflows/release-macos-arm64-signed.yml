@@ -25,8 +25,10 @@
 #   - manual: Actions → Release macOS arm64 signed DMG → Run workflow
 # All other workflows are workflow_dispatch-only on this fork.
 #
-# Default on push / manual: upload Actions artifacts only (no GitHub Release).
-# Manual runs can enable "Publish GitHub Release" for a prerelease tag:
+# On push to master: always create a GitHub prerelease (and tag) from the
+# built assets after sign/notarize. Manual runs also upload artifacts; enable
+# "Create a GitHub prerelease (and tag) from the built assets" to publish.
+# Tag form:
 #   macos-arm64-v{version}-{7-char commit sha}
 # Short SHA ties the tag to the built commit: same version + same commit →
 # same tag. Re-runs replace assets on that release (overwrite_files: true).
@@ -543,8 +545,13 @@ jobs:
           rm -f "${RUNNER_TEMP}/developer-id-application.p12"
 
   publish:
-    # Push builds always stop at signed artifacts; only manual dispatch can publish.
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publish_github_release == 'true' }}
+    # Auto-publish on push; manual runs only when the prerelease input is checked.
+    if: >-
+      ${{
+        github.event_name == 'push' ||
+        (github.event_name == 'workflow_dispatch' &&
+         github.event.inputs.publish_github_release == 'true')
+      }}
     needs:
       - resolve-version
       - sign-and-package
