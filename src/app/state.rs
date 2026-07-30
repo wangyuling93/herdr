@@ -475,7 +475,7 @@ impl Palette {
             panel_bg: Color::Rgb(25, 23, 36),
             surface0: Color::Rgb(31, 29, 46),
             surface1: Color::Rgb(38, 35, 58),
-            surface_dim: Color::Rgb(25, 23, 36),
+            surface_dim: Color::Rgb(38, 35, 58),
             overlay0: Color::Rgb(110, 106, 134),
             overlay1: Color::Rgb(144, 140, 170),
             text: Color::Rgb(224, 222, 244),
@@ -814,6 +814,10 @@ pub enum Mode {
 }
 
 impl Mode {
+    pub(crate) fn mouse_motion_changes_view(self) -> bool {
+        matches!(self, Self::GlobalMenu | Self::ContextMenu | Self::Navigator)
+    }
+
     /// Whether keys in this mode are commands/navigation (an ASCII input source is wanted) rather
     /// than free text. This is an explicit **allowlist** of the prefix command/navigation realm:
     /// any mode NOT listed defaults to leaving the user's IME alone (the safe default), so adding a
@@ -1027,7 +1031,7 @@ impl ExperimentSetting {
         match self {
             Self::PaneHistory => "pane screen history",
             Self::SwitchAsciiInputSourceInPrefix => {
-                "switch to ascii input source in prefix (macOS)"
+                "switch to ascii input source in prefix (macOS/Windows)"
             }
         }
     }
@@ -1137,10 +1141,16 @@ pub struct SettingsState {
     pub original_theme: Option<String>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum WorkspaceDropTarget {
+    Before(usize),
+    End,
+}
+
 pub(crate) enum DragTarget {
     WorkspaceReorder {
         source_ws_idx: usize,
-        insert_idx: Option<usize>,
+        drop_target: Option<WorkspaceDropTarget>,
     },
     TabReorder {
         ws_idx: usize,
@@ -1541,8 +1551,6 @@ pub struct AppState {
     pub local_sound_playback: bool,
     pub toast_config: ToastConfig,
     pub keybinds: Keybinds,
-    /// Frame counter for spinner animations (wraps around).
-    pub spinner_tick: u32,
     /// UI color palette — all sidebar/UI colors centralized for theming.
     pub palette: Palette,
     /// Currently applied theme name (for settings UI).
@@ -1910,7 +1918,6 @@ impl AppState {
             local_sound_playback: false,
             toast_config: ToastConfig::default(),
             keybinds: Keybinds::default(),
-            spinner_tick: 0,
             palette: Palette::catppuccin(),
             theme_name: "catppuccin".to_string(),
             theme_runtime: ThemeRuntimeConfig {
@@ -2207,16 +2214,11 @@ impl AppState {
             match &drag.target {
                 DragTarget::WorkspaceReorder {
                     source_ws_idx,
-                    insert_idx,
+                    drop_target,
                 } => {
                     assert_workspace_index(*source_ws_idx, "workspace drag source");
-                    if let Some(insert_idx) = insert_idx {
-                        assert!(
-                            *insert_idx <= self.workspaces.len(),
-                            "workspace drag insert index {} out of bounds for {} workspaces",
-                            insert_idx,
-                            self.workspaces.len()
-                        );
+                    if let Some(WorkspaceDropTarget::Before(ws_idx)) = drop_target {
+                        assert_workspace_index(*ws_idx, "workspace drag target");
                     }
                 }
                 DragTarget::TabReorder {
